@@ -1,3 +1,4 @@
+import pygame
 # initialize game screen
 GAME_WIDTH = 600
 GAME_HEIGHT = 600
@@ -11,3 +12,9 @@ CELL_SIZE = 20
 # Game color
 PANEL_COLOR = "white"
 GRID_COLOR = (56, 50, 24)
+
+# Snake Initial pos 
+SNAKE_INITIAL_POS = pygame.Vector2(GAME_WIDTH // CELL_SIZE // 2, 
+                                   GAME_HEIGHT // CELL_SIZE // 2)
+SNAKE_SEGMENT_COUNT = 3
+SNAKE_INITIAL_DIR = pygame.Vector2(0,-1)
