@@ -11,6 +11,7 @@ class Snake:
             for segment in range(self.segment_count)
         ]
         self.cell = cell
+        self.grow = False
 
 
     def draw_snake(self, screen):
@@ -23,30 +24,10 @@ class Snake:
     def change_dir(Self):
         pass
 
-    def move_snake(self, growth_flag):
+    def move_snake(self):
         self.segments.insert(0, self.direction + self.segments[0])
-        
-        if not growth_flag:
+        if not self.grow:
             self.segments.pop()      
 
-    # def check_self_collision(self):
-    #     pass
 
-    def check_border_collision(self):
-        border = [config.GAME_HEIGHT // self.cell, 
-                config.GAME_WIDTH // self.cell, -1]
-        if self.segments[0].x in border or self.segments[0].y in border:
-            return True
-        return False
-    
-    def reset(self, initial_pos, initial_direction, initial_count):
-        self.direction = initial_direction
-        self.segment_count = initial_count
-        self.segments = [
-            initial_pos - pygame.Vector2(segment,0)
-            for segment in range(initial_count)
-        ]
-    def check_self_collision(self):
-        if self.segments[0] in self.segments[1:]:
-            return True
-        return False
+

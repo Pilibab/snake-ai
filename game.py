@@ -1,18 +1,18 @@
 import pygame
-from pygame.locals import *
+
 
 import config
 from snake import Snake
+from snakeEnv import Snake_env
 
 class Game:
     def __init__(self):
         self.isRunning = True
         self.screen = pygame.display.set_mode(config.TRUE_SCREEN)
         self.cell_size = config.CELL_SIZE
-        self.snake = Snake(self.cell_size, 
-                        config.SNAKE_INITIAL_POS,
-                        config.SNAKE_INITIAL_DIR,
-                        config.SNAKE_SEGMENT_COUNT)
+        self.env = Snake_env(self.screen) 
+        self.snake = self.env.snake
+        self.fruit = self.env.fruit
         self.clock = pygame.time.Clock()
         self.move_delay = 0
 
@@ -29,15 +29,18 @@ class Game:
             self.draw_grid()
 
             self.snake.draw_snake(self.screen)
+            self.fruit.draw_fruit(self.screen)
 
 
             # Add movement delay to still keep 60 fps
             if self.move_delay > 6:
-                self.snake.move_snake(growth_flag = False)
+                self.snake.move_snake()
                 self.move_delay = 0 
 
-                if self.snake.check_border_collision() or self.snake.check_self_collision():
+                if self.env.check_border_collision() or self.env.check_self_collision():
                     self.reset()
+
+                self.env.check_fruit_collision()
 
             self.move_delay += 1
             self.clock.tick(60)
@@ -55,6 +58,6 @@ class Game:
             pygame.draw.line(self.screen, config.GRID_COLOR, (0, y), (config.GAME_WIDTH, y))
 
     def reset(self):
-        self.snake.reset(config.SNAKE_INITIAL_POS,
-                        config.SNAKE_INITIAL_DIR,
-                        config.SNAKE_SEGMENT_COUNT)
+        self.env.reset(config.SNAKE_INITIAL_POS, config.SNAKE_INITIAL_DIR, config.SNAKE_SEGMENT_COUNT)
+        self.snake = self.env.snake
+        self.fruit = self.env.fruit

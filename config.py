@@ -12,6 +12,7 @@ CELL_SIZE = 20
 # Game color
 PANEL_COLOR = "white"
 GRID_COLOR = (56, 50, 24)
+FRUIT_COLOR = (255, 87, 51)
 
 # Snake Initial pos 
 SNAKE_INITIAL_POS = pygame.Vector2(GAME_WIDTH // CELL_SIZE // 2, 
