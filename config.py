@@ -19,3 +19,10 @@ SNAKE_INITIAL_POS = pygame.Vector2(GAME_WIDTH // CELL_SIZE // 2,
                                    GAME_HEIGHT // CELL_SIZE // 2)
 SNAKE_SEGMENT_COUNT = 3
 SNAKE_INITIAL_DIR = pygame.Vector2(0,-1)
+
+
+# Movement
+COUNTER_CLOCKWISE = [[0,-1],
+                    [1,0]]
+CLOCKWISE = [[0,1],
+            [-1,0]]

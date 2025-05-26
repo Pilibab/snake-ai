@@ -1,5 +1,6 @@
 import pygame 
 import config
+from numpy import matmul, array
 
 
 class Snake:
@@ -21,13 +22,17 @@ class Snake:
             pygame.draw.rect(screen, "white", Rect)
             pygame.draw.rect(screen, config.GRID_COLOR, Rect, width=1)
 
-    def change_dir(Self):
-        pass
+    def change_dir_right(self):
+        self.direction = pygame.Vector2(matmul(self.direction, config.CLOCKWISE))
+
+    def change_dir_left(self):
+        self.direction = pygame.Vector2(matmul(self.direction, config.COUNTER_CLOCKWISE))
 
     def move_snake(self):
         self.segments.insert(0, self.direction + self.segments[0])
         if not self.grow:
-            self.segments.pop()      
+            self.segments.pop() 
+
 
 
 
