@@ -23,10 +23,15 @@ class Snake:
             pygame.draw.rect(screen, config.GRID_COLOR, Rect, width=1)
 
     def change_dir_right(self):
-        self.direction = pygame.Vector2(matmul(self.direction, config.CLOCKWISE))
+        x, y = self.direction
+        n_x, n_y = matmul([x, y], config.CLOCKWISE)
+        self.direction = pygame.Vector2(n_x, n_y)
 
     def change_dir_left(self):
-        self.direction = pygame.Vector2(matmul(self.direction, config.COUNTER_CLOCKWISE))
+        x, y = self.direction
+        n_x, n_y = matmul([x, y], config.COUNTER_CLOCKWISE)
+        self.direction = pygame.Vector2(n_x, n_y)
+
 
     def move_snake(self):
         self.segments.insert(0, self.direction + self.segments[0])

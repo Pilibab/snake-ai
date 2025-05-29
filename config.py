@@ -26,3 +26,6 @@ COUNTER_CLOCKWISE = [[0,-1],
                     [1,0]]
 CLOCKWISE = [[0,1],
             [-1,0]]
+
+# Machine learning constant / training const 
+AlPHA = 0.001

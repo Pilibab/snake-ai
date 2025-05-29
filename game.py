@@ -1,16 +1,15 @@
 import pygame
-
-
 import config
 from snake import Snake
 from snakeEnv import Snake_env
-
+from snakeAgent import Agent
 class Game:
     def __init__(self):
         self.isRunning = True
         self.screen = pygame.display.set_mode(config.TRUE_SCREEN)
         self.cell_size = config.CELL_SIZE
-        self.env = Snake_env(self.screen) 
+        self.env = Snake_env() 
+        self.agent = Agent()
         self.snake = self.env.snake
         self.fruit = self.env.fruit
         self.clock = pygame.time.Clock()
@@ -25,6 +24,7 @@ class Game:
             self.screen.fill("black")
 
 
+            # Draw game 
             self.draw_panel()
             self.draw_grid()
 
@@ -34,16 +34,35 @@ class Game:
 
             # Add movement delay to still keep 60 fps
             if self.move_delay > 6:
-                self.snake.move_snake()
                 self.move_delay = 0 
 
                 if self.env.check_border_collision() or self.env.check_self_collision():
                     self.reset()
 
-                self.env.check_fruit_collision()
+                if self.env.check_fruit_collision():
+                    self.env.snake.grow = True
+                    self.env.score += 1
+                    self.fruit.spawn_Fruit()
+                
+                state = self.env.get_state()
+                dr, df, dl, fx, fy = state
+                print(f"danger: [{dr}, {df}, {dl}], fruit pos: ({fx}, {fy})")
+
+                action, act_index = self.agent.get_action(state)
+
+                # Use action to turn the snake
+                if action == [1,0,0]:
+                    self.snake.change_dir_left()
+                elif action == [0,0,1]:
+                    self.snake.change_dir_right()
+                # else: [0,1,0] means go forward → do nothing
+
+                self.snake.move_snake()
 
             self.move_delay += 1
             self.clock.tick(60)
+
+            # Update screen
             pygame.display.flip()
 
     def draw_panel(self):
