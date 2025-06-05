@@ -4,6 +4,7 @@ from game import Game
 
 pygame.init()
 pygame.font.init()
+pygame.display.set_caption("SNAKE AI (DEEP-Q)")
 
 if __name__ == "__main__":
 

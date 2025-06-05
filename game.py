@@ -1,19 +1,20 @@
 import pygame
 import config
-from snake import Snake
 from snakeEnv import Snake_env
 from snakeAgent import Agent
+
 class Game:
     def __init__(self):
         self.isRunning = True
         self.screen = pygame.display.set_mode(config.TRUE_SCREEN)
         self.cell_size = config.CELL_SIZE
-        self.env = Snake_env() 
+        self.env = Snake_env(self.screen) 
         self.agent = Agent()
         self.snake = self.env.snake
         self.fruit = self.env.fruit
         self.clock = pygame.time.Clock()
         self.move_delay = 0
+        self.danger_rects = []   
 
     def run(self):
         while self.isRunning:
@@ -21,9 +22,10 @@ class Game:
                 if event.type == pygame.QUIT:
                     self.isRunning = False
 
+            # Reset screen
             self.screen.fill("black")
 
-
+            
             # Draw game 
             self.draw_panel()
             self.draw_grid()
@@ -42,12 +44,13 @@ class Game:
                 if self.env.check_fruit_collision():
                     self.env.snake.grow = True
                     self.env.score += 1
-                    self.fruit.spawn_Fruit()
+                    self.fruit.spawn_Fruit(self.snake.segments)
                 
                 state = self.env.get_state()
-                dr, df, dl, fx, fy = state
-                print(f"danger: [{dr}, {df}, {dl}], fruit pos: ({fx}, {fy})")
-
+                dr, df, dl, fx, fy, Rects = state
+                self.danger_rects = Rects
+                print(f"danger: [{dr}, {df}, {dl}], delta_fruit_pos: ({fx}, {fy})")
+                
                 action, act_index = self.agent.get_action(state)
 
                 # Use action to turn the snake
@@ -58,6 +61,8 @@ class Game:
                 # else: [0,1,0] means go forward → do nothing
 
                 self.snake.move_snake()
+            
+            self.draw_danger_box(self.danger_rects)
 
             self.move_delay += 1
             self.clock.tick(60)
@@ -76,6 +81,16 @@ class Game:
         for y in range(0, config.GAME_HEIGHT, config.CELL_SIZE):
             pygame.draw.line(self.screen, config.GRID_COLOR, (0, y), (config.GAME_WIDTH, y))
 
+    def draw_danger_box(self, rectangles):
+        for Rect in rectangles:
+            x, y, _ , _ = Rect
+
+            if x < 0 or x >= config.GAME_WIDTH:
+                continue
+            if y < 0 or y >= config.GAME_HEIGHT:
+                continue
+            pygame.draw.rect(self.screen, "green", Rect, 1) 
+        
     def reset(self):
         self.env.reset(config.SNAKE_INITIAL_POS, config.SNAKE_INITIAL_DIR, config.SNAKE_SEGMENT_COUNT)
         self.snake = self.env.snake

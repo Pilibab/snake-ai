@@ -6,8 +6,9 @@ from helper import rotate_left, rotate_right
 from fruit import Fruit
 
 class Snake_env:
-    def __init__(self):
+    def __init__(self, screen):
 
+        self.screen = screen
         self.cell_size = config.CELL_SIZE
         
         # Set starting info Snake
@@ -27,13 +28,18 @@ class Snake_env:
                         self.snake.segments)
         self.score = 0 
     
-    def check_border_collision(self):
-        border = [config.GAME_HEIGHT // self.cell_size, 
-                config.GAME_WIDTH // self.cell_size, -1]
-        if self.snake.segments[0].x in border or self.snake.segments[0].y in border:
+    def check_border_collision(self, pos=None):
+        if pos is None:
+            head = self.snake.segments[0]
+            x, y = head.x, head.y
+        else:
+            x, y = pos
+
+        if x < 0 or x >= config.GAME_WIDTH or y < 0 or y >= config.GAME_HEIGHT:
             print("border collided")
             return True
         return False
+
     
     def reset(self, initial_pos, initial_direction, initial_count):
         self.snake = Snake(self.cell_size, initial_pos, initial_direction, initial_count)
@@ -53,7 +59,7 @@ class Snake_env:
     def get_state(self):
         head = self.snake.segments[0]               # gets the first segment -> return vect2(), tuples 
         dir_v = self.snake.direction                # direction -> returns vect2() i.e (-1,0), (1,0) etc..
-        
+
         # Grid relative to head
         left_dir = rotate_left(dir_v)
         right_dir = rotate_right(dir_v)
@@ -73,7 +79,13 @@ class Snake_env:
         fruit_dx = self.fruit.position.x - head.x
         fruit_dy = self.fruit.position.y - head.y
 
-        return [danger_right, danger_forward, danger_left, fruit_dx, fruit_dy]
+        Rects = [
+            ((head.x + left_dir[0]) * self.cell_size, (head.y + left_dir[1]) * self.cell_size, self.cell_size, self.cell_size),
+            ((head.x + forward_dir[0]) * self.cell_size, (head.y + forward_dir[1]) * self.cell_size, self.cell_size, self.cell_size),
+            ((head.x + right_dir[0]) * self.cell_size, (head.y + right_dir[1]) * self.cell_size, self.cell_size, self.cell_size),
+        ]
+
+        return [danger_right, danger_forward, danger_left, fruit_dx, fruit_dy, Rects]
         
     def danger(self, pos):
         x, y = pos
@@ -90,7 +102,6 @@ class Snake_env:
         return 0
 
 
-        
 
 
 

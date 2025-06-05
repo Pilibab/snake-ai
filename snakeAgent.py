@@ -2,6 +2,7 @@ import config
 import pygame
 from snake import Snake
 from random import random, randint
+from collections import deque
 
 class Agent:
     def __init__(self):
@@ -9,6 +10,8 @@ class Agent:
         self. epsilon = 1.0
         self.eps_decy = .999
         self.eps_min = 0.1
+
+        self.memory = deque(maxlen=1000)
 
         self.action = [
             [1,0,0],        # turn left
@@ -25,7 +28,7 @@ class Agent:
         self.Q_table = {}  # TODO: add a 1k len buffer
 
     def get_action(self, state):
-        state = tuple(state)
+        state = tuple(state[:-1])
 
         if state not in self.Q_table:
             self.Q_table[state] = [0, 0, 0]
@@ -40,7 +43,7 @@ class Agent:
         return self.action[act_index], act_index
     
     def remember(self, state, action, reward, next_state, done):
-        pass
+        self.memory.append((state, action ,reward, next_state, done))
 
     def save_model(self, FILE_PATH):
         pass
@@ -52,4 +55,5 @@ class Agent:
         pass
 
     def decay_exploartion(self):
-        pass
+        if self.epsilon > self.eps_min:
+            self.epsilon *= self.eps_decy
