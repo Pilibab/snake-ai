@@ -1,12 +1,14 @@
 import pygame
-from pygame.locals import *
 from game import Game
+from snakeAgent import Agent
 
 pygame.init()
 pygame.font.init()
 pygame.display.set_caption("SNAKE AI (DEEP-Q)")
 
-if __name__ == "__main__":
+# def main()
 
-    game = Game()
+if __name__ == "__main__":
+    agent = Agent()
+    game = Game(agent)
     game.run()

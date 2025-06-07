@@ -10,6 +10,7 @@ class Snake_env:
 
         self.screen = screen
         self.cell_size = config.CELL_SIZE
+        self.danger_rects = []
         
         # Set starting info Snake
         self.snake_pos = config.SNAKE_INITIAL_POS
@@ -26,7 +27,6 @@ class Snake_env:
         self.fruit = Fruit(
                         self.cell_size, 
                         self.snake.segments)
-        self.score = 0 
     
     def check_border_collision(self, pos=None):
         if pos is None:
@@ -35,7 +35,7 @@ class Snake_env:
         else:
             x, y = pos
 
-        if x < 0 or x >= config.GAME_WIDTH or y < 0 or y >= config.GAME_HEIGHT:
+        if x < 0 or x >= config.GAME_WIDTH // self.cell_size or y < 0 or y >= config.GAME_HEIGHT // self.cell_size:
             print("border collided")
             return True
         return False
@@ -44,7 +44,6 @@ class Snake_env:
     def reset(self, initial_pos, initial_direction, initial_count):
         self.snake = Snake(self.cell_size, initial_pos, initial_direction, initial_count)
         self.fruit = Fruit(self.cell_size, self.snake.segments)
-        self.score = 0
         
     def check_self_collision(self):
         if self.snake.segments[0] in self.snake.segments[1:]:
@@ -85,9 +84,12 @@ class Snake_env:
             ((head.x + right_dir[0]) * self.cell_size, (head.y + right_dir[1]) * self.cell_size, self.cell_size, self.cell_size),
         ]
 
-        return [danger_right, danger_forward, danger_left, fruit_dx, fruit_dy, Rects]
+        self.danger_rects = Rects
+
+        return [danger_right, danger_forward, danger_left, fruit_dx, fruit_dy]
         
     def danger(self, pos):
+        #TODO : if nearest forward_right and forward_left is danger then we set forward to be dangerous
         x, y = pos
         # Check for border 
         if x < 0 or x >= config.GAME_HEIGHT // self.cell_size:

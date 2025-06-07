@@ -2,7 +2,7 @@ import pygame
 # initialize game screen
 GAME_WIDTH = 600
 GAME_HEIGHT = 600
-PANEL_WIDTH = 300
+PANEL_WIDTH = 400
 
 TRUE_SCREEN = (GAME_WIDTH + PANEL_WIDTH, GAME_HEIGHT)
 
@@ -17,9 +17,11 @@ FRUIT_COLOR = (255, 87, 51)
 # Snake Initial pos 
 SNAKE_INITIAL_POS = pygame.Vector2(GAME_WIDTH // CELL_SIZE // 2, 
                                    GAME_HEIGHT // CELL_SIZE // 2)
-SNAKE_SEGMENT_COUNT = 5
-SNAKE_INITIAL_DIR = pygame.Vector2(0,-1)
+SNAKE_SEGMENT_COUNT = 3
+SNAKE_INITIAL_DIR = pygame.Vector2(1,0)
 
+FONT_FAM = 'Arial'
+FONT_COLOR = "black"
 
 # Movement
 COUNTER_CLOCKWISE = [[0,-1],
@@ -29,3 +31,9 @@ CLOCKWISE = [[0,1],
 
 # Machine learning constant / training const 
 AlPHA = 0.001
+GAMMA = .9
+EPSILON = 1.0
+EPS_DECAY = .999
+EPS_MIN = 0.1
+BATCH_SIZE = 1000
+MEMORY = 100_000

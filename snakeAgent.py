@@ -1,59 +1,110 @@
-import config
-import pygame
-from snake import Snake
-from random import random, randint
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from collections import deque
+import random
+import config
+from model import DQN
+
 
 class Agent:
-    def __init__(self):
+    def __init__(self, state_size = 5, ouput_size = 3):
+        self.state_size = state_size
+        self.action_size = ouput_size
+        # Constants / hyper parameters
         self.alpha = config.AlPHA
-        self. epsilon = 1.0
-        self.eps_decy = .999
-        self.eps_min = 0.1
+        self.epsilon = config.EPSILON
+        self.eps_decy = config.EPS_DECAY
+        self.eps_min = config.EPS_MIN
+        self.gamma = config.GAMMA
 
-        self.memory = deque(maxlen=1000)
+        self.memory = deque(maxlen=config.MEMORY)
+        self.batch_size = config.BATCH_SIZE
 
-        self.action = [
-            [1,0,0],        # turn left
-            [0,1,0],        # turn forward
-            [0,0,1]         # turn right 
-        ]
-        
         self.reward = {
             "eat": 10,
             "death": -100,
-            "time_score_decay": -.1,
+            "move_close": .01,
+            "time_score_decay": -0.05,
         }
-
-        self.Q_table = {}  # TODO: add a 1k len buffer
+        # Neural network 
+        self.model = DQN(state_size, 256, ouput_size)
+        self.optimizer = optim.Adam(self.model.parameters(), lr = self.alpha)
+        self.criterion = nn.MSELoss()
 
     def get_action(self, state):
-        state = tuple(state[:-1])
+        final_state = state
 
-        if state not in self.Q_table:
-            self.Q_table[state] = [0, 0, 0]
+        state = torch.tensor(final_state, dtype=torch.float).unsqueeze(0)
 
-        if random() < self.epsilon:
-            act_index = randint(0,2)
+        if random.random() < self.epsilon:
+            return random.randint(0, self.action_size - 1)
         else: 
-            # from q table return the index with the highest probability among action 
-            # NOTE: that q_table -> (state) -> tuple : [self.action[nth]]
-            act_index = self.Q_table[state].index(max(self.Q_table[state]))
-        
-        return self.action[act_index], act_index
-    
+            with torch.no_grad():
+                q_val = self.model(state)               # Returns the output layer, size=3 (e.g. [0.3,0.67, 0.9])
+                return torch.argmax(q_val).item()       
+
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action ,reward, next_state, done))
 
-    def save_model(self, FILE_PATH):
-        pass
 
-    def load_model(self, FILE_PATH):
-        pass
+    def learn_long_term(self):
+        if len(self.memory) < self.batch_size:
+            return 
+        batch = random.sample(self.memory, self.batch_size)
+        states, actions, rewards, next_states, dones = zip(*batch)
 
-    def learn(self):
-        pass
+        states = torch.tensor(states, dtype=torch.float)       
+        actions = torch.tensor(actions)
+        rewards = torch.tensor(rewards, dtype=torch.float)
+        next_states = torch.tensor(next_states, dtype=torch.float)
+        dones = torch.tensor(dones, dtype=torch.bool)
 
-    def decay_exploartion(self):
+        q_val = self.model(states)
+        targets = q_val.clone() # -> what is this for?
+
+        # dont get everything under this
+        for i in range(self.batch_size):
+            q_update = rewards[i]
+            if not dones[i]:
+                q_update = rewards[i] + self.gamma * torch.max(self.model(next_states[i]))
+            targets[i][torch.argmax(actions[i])] = q_update
+
+        self.optimizer.zero_grad()
+        loss = self.criterion(q_val, targets)
+
+        loss.backward()
+        self.optimizer.step()
+
+    def learn_short_term(self, state, action ,reward, next_state, done):
+        if len(self.memory) < self.batch_size:
+            return 
+        state = torch.tensor(state, dtype=torch.float)
+        next_state = torch.tensor(next_state, dtype=torch.float)
+        action = torch.tensor(action, dtype=torch.long)
+        reward = torch.tensor(reward, dtype=torch.float)
+
+        state = torch.unsqueeze(state, 0)
+        next_state = torch.unsqueeze(next_state, 0)
+        action = torch.unsqueeze(action, 0)
+        reward = torch.unsqueeze(reward, 0)
+
+        q_val = self.model(state)
+        target = q_val.clone()
+
+        if not done:
+            q_update = reward + self.gamma * torch.max(self.model(next_state))
+        else:
+            q_update = reward
+        
+        target[0][action] = q_update
+
+        self.optimizer.zero_grad()
+        loss = self.criterion(q_val, target)
+
+        loss.backward()
+        self.optimizer.step()
+        
+    def decay_exploration(self):
         if self.epsilon > self.eps_min:
             self.epsilon *= self.eps_decy

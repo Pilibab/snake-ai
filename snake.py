@@ -20,7 +20,7 @@ class Snake:
             Rect = (segment.x * self.cell, segment.y * self.cell,
                     self.cell, self.cell)
             pygame.draw.rect(screen, "white", Rect)
-            pygame.draw.rect(screen, config.GRID_COLOR, Rect, width=1)
+            # pygame.draw.rect(screen, config.GRID_COLOR, Rect, width=1)
 
     def change_dir_right(self):
         x, y = self.direction
@@ -36,8 +36,9 @@ class Snake:
     def move_snake(self):
         self.segments.insert(0, self.direction + self.segments[0])
         if not self.grow:
-            self.segments.pop() 
-
+            self.segments.pop()     
+        # else: 
+        #     self.grow = False
 
 
 
