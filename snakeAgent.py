@@ -8,9 +8,9 @@ from model import DQN
 
 
 class Agent:
-    def __init__(self, state_size = 5, ouput_size = 3):
+    def __init__(self, state_size = 9, output_size = 3):
         self.state_size = state_size
-        self.action_size = ouput_size
+        self.action_size = output_size
         # Constants / hyper parameters
         self.alpha = config.AlPHA
         self.epsilon = config.EPSILON
@@ -26,9 +26,10 @@ class Agent:
             "death": -100,
             "move_close": .01,
             "time_score_decay": -0.05,
+            "none": 0
         }
         # Neural network 
-        self.model = DQN(state_size, 256, ouput_size)
+        self.model = DQN(state_size, 256, output_size)
         self.optimizer = optim.Adam(self.model.parameters(), lr = self.alpha)
         self.criterion = nn.MSELoss()
 
@@ -47,7 +48,6 @@ class Agent:
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action ,reward, next_state, done))
 
-
     def learn_long_term(self):
         if len(self.memory) < self.batch_size:
             return 
@@ -55,24 +55,25 @@ class Agent:
         states, actions, rewards, next_states, dones = zip(*batch)
 
         states = torch.tensor(states, dtype=torch.float)       
-        actions = torch.tensor(actions)
+        actions = torch.tensor(actions, dtype=torch.long)
         rewards = torch.tensor(rewards, dtype=torch.float)
         next_states = torch.tensor(next_states, dtype=torch.float)
         dones = torch.tensor(dones, dtype=torch.bool)
 
-        q_val = self.model(states)
-        targets = q_val.clone() # -> what is this for?
+        current_q_values = self.model(states)
+        next_q_values = self.model(next_states)
+
+        targets_q_values = current_q_values.clone() # -> what is this for?
 
         # dont get everything under this
         for i in range(self.batch_size):
-            q_update = rewards[i]
-            if not dones[i]:
-                q_update = rewards[i] + self.gamma * torch.max(self.model(next_states[i]))
-            targets[i][torch.argmax(actions[i])] = q_update
+            if dones[i]:
+                targets_q_values[i][actions[i]]  = rewards[i]
+            else:
+                targets_q_values[i][actions[i]]  = rewards[i] + self.gamma * torch.max(next_q_values[i])
 
         self.optimizer.zero_grad()
-        loss = self.criterion(q_val, targets)
-
+        loss = self.criterion(current_q_values, targets_q_values)
         loss.backward()
         self.optimizer.step()
 
@@ -81,8 +82,8 @@ class Agent:
             return 
         state = torch.tensor(state, dtype=torch.float)
         next_state = torch.tensor(next_state, dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
-        reward = torch.tensor(reward, dtype=torch.float)
+        action = torch.tensor([action], dtype=torch.long)
+        reward = torch.tensor([reward], dtype=torch.float)
 
         state = torch.unsqueeze(state, 0)
         next_state = torch.unsqueeze(next_state, 0)
@@ -93,15 +94,15 @@ class Agent:
         target = q_val.clone()
 
         if not done:
-            q_update = reward + self.gamma * torch.max(self.model(next_state))
+            next_q = self.model(next_state)
+            q_update = reward + self.gamma * torch.max(next_q)
         else:
             q_update = reward
         
-        target[0][action] = q_update
+        target[0][action[0]] = q_update
 
         self.optimizer.zero_grad()
         loss = self.criterion(q_val, target)
-
         loss.backward()
         self.optimizer.step()
         

@@ -7,22 +7,18 @@ from fruit import Fruit
 
 class Snake_env:
     def __init__(self, screen):
-
         self.screen = screen
         self.cell_size = config.CELL_SIZE
         self.danger_rects = []
-        
         # Set starting info Snake
         self.snake_pos = config.SNAKE_INITIAL_POS
         self.snake_dir = config.SNAKE_INITIAL_DIR
         self.segment_count = config.SNAKE_SEGMENT_COUNT
-
         # Initialize Snake class
         self.snake = Snake(self.cell_size, 
                         self.snake_pos, 
                         self.snake_dir, 
                         self.segment_count)
-        
         # Initialize Fruit class
         self.fruit = Fruit(
                         self.cell_size, 
@@ -56,6 +52,7 @@ class Snake_env:
         return False
 
     def get_state(self):
+        # TODO: try adding manhattan distance to state
         head = self.snake.segments[0]               # gets the first segment -> return vect2(), tuples 
         dir_v = self.snake.direction                # direction -> returns vect2() i.e (-1,0), (1,0) etc..
 
@@ -83,16 +80,39 @@ class Snake_env:
             ((head.x + forward_dir[0]) * self.cell_size, (head.y + forward_dir[1]) * self.cell_size, self.cell_size, self.cell_size),
             ((head.x + right_dir[0]) * self.cell_size, (head.y + right_dir[1]) * self.cell_size, self.cell_size, self.cell_size),
         ]
-
         self.danger_rects = Rects
 
-        return [danger_right, danger_forward, danger_left, fruit_dx, fruit_dy]
+        fruit_dir_x = 0
+        fruit_dir_y = 0
+
+        # fruit Direction 
+        if fruit_dx > 0:
+            fruit_dir_x = 1
+        elif  fruit_dx < 0:
+            fruit_dir_x = -1
+
+        if fruit_dy > 0:
+            fruit_dir_y = 1
+        elif fruit_dy < 0: 
+            fruit_dir_y = -1
+
+        dir_l = dir_v == (-1,0)
+        dir_r = dir_v == (1,0)
+        dir_u = dir_v == (0,-1)
+        dir_d = dir_v == (0,1)
+
+        return [danger_right, 
+                danger_forward, 
+                danger_left, 
+                dir_l, dir_r, dir_u, dir_d,
+                fruit_dir_x, 
+                fruit_dir_y]
         
     def danger(self, pos):
         #TODO : if nearest forward_right and forward_left is danger then we set forward to be dangerous
         x, y = pos
         # Check for border 
-        if x < 0 or x >= config.GAME_HEIGHT // self.cell_size:
+        if x < 0 or x >= config.GAME_WIDTH // self.cell_size:
             return 1
         if y < 0 or y >= config.GAME_HEIGHT // self.cell_size:
             return 1

@@ -15,8 +15,8 @@ class Game:
         self.move_delay = 0
         self.score = 0
         self.best_score = 0 
-        self.scores_array = []
-        self.mean_score = []
+        self.scores_array = [0]
+        self.mean_score = [0]
         self.isFruit_eaten = False
         
         self.y_bar_len = 260
@@ -35,9 +35,6 @@ class Game:
         self.training_enabled = True
         self.episode_done = False
         self.episodes = 1 
-        # button 
-        self.train_button = pygame.Rect(config.GAME_WIDTH + 20, 200, 120, 40)
-        self.reset_button = pygame.Rect(config.GAME_WIDTH + 140, 200, 120, 40)
         # Load model
         if os.path.exists("model/dqn_model.pth"):
             self.agent.model.load_model("model/dqn_model.pth")
@@ -48,85 +45,96 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.isRunning = False
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.handle_mouse(event.pos)
 
-            # Reset screen
-            self.screen.fill("black")
-
-            # Draw game 
-            self.draw_panel()
-            self.draw_grid()
-
-            self.danger_rects = self.env.danger_rects
-            self.draw_danger_box(self.danger_rects)
-            self.snake.draw_snake(self.screen)
-            self.fruit.draw_fruit(self.screen)
-
-            # Get old state
-            old_state = self.env.get_state()
-            dr, df, dl, fx, fy = old_state
-            self.episode_done = False
-            
+            #* --------------------------------------GAME LOGIC (60 FPS)-------------------------------------------
             # Add movement delay to still keep 60 fps
             if self.move_delay > 1:
                 self.move_delay = 0 
 
-                if self.env.check_fruit_collision():
+                # 1. Get old state
+                old_state = self.env.get_state()
+
+                # [danger_right, 
+                # danger_forward, 
+                # danger_left, 
+                # dir_l, dir_r, dir_u, dir_d,
+                # fruit_dir_x, 
+                # fruit_dir_y]
+                dr, df, dl, dir_l, dir_r, dir_u, dir_d, fx, fy = old_state
+                self.episode_done = False
+
+                # 2. Getting action part 
+                act_index = self.agent.get_action(old_state)
+
+                # 3. Use action to turn the snake
+                if act_index == 1:
+                    self.snake.change_dir_left()
+                elif act_index == 2:
+                    self.snake.change_dir_right()
+
+                # 4. Move snake
+                self.snake.move_snake()
+
+                # 5. Check collision 
+                if self.env.check_border_collision() or self.env.check_self_collision():
+                    self.episode_done = True
+
+                # Check fruit collision before moving 
+                if not self.episode_done and self.env.check_fruit_collision():
                     self.env.snake.grow = True
                     self.isFruit_eaten = True
                     self.score += 1
                     self.fruit.position = self.fruit.spawn_Fruit(self.snake.segments)   
                     print("\n\nate\n\n")
 
-                status = "Tr" if self.training_enabled else ""
-
-                # Getting action part 
-                act_index = self.agent.get_action(old_state)
-                action = [0,0,0]
-                action[act_index] = 1
-
-                # Use action to turn the snake
-                if action == [1,0,0]:
-                    self.snake.change_dir_left()
-                elif action == [0,0,1]:
-                    self.snake.change_dir_right()
-                # else: [0,1,0] means go forward → do nothing
-
-                self.snake.move_snake()
+                # 6. New state after moving 
                 new_state = self.env.get_state()
 
-                if self.env.check_border_collision() or self.env.check_self_collision():
-                    self.train()
-                    self.episode_done = True
-
+                # 7. Cal reward
                 reward = self.get_reward(old_state, new_state)
-                self.agent.remember(old_state, action, reward, new_state, self.episode_done)
 
-                # print(f"{status}: d[{dr},{df},{dl}], ∆F({fx}, {fy}), eps:{self.agent.epsilon:.2} r({reward})")
+                # 8. Remember experience
+                self.agent.remember(old_state, act_index, reward, new_state, self.episode_done)
 
-                self.agent.learn_short_term(old_state, action, reward, new_state, self.episode_done)
+                status = "Tr" if self.training_enabled else ""
+                # Jesus just say self.snake_dir
+                if dir_r:
+                    direction = "r"
+                elif dir_l:
+                    direction = "l"
+                elif dir_u:
+                    direction = "u"
+                else:
+                    direction = "d"
+                # print(f"{status}: d[{dr},{df},{dl}], ∆F({fx}, {fy}), ab_hat:{direction}, eps:{self.agent.epsilon:.2} r({reward})")
+
+                # 9. Train short term
+                self.agent.learn_short_term(old_state, act_index, reward, new_state, self.episode_done)
+
+                if self.episode_done:
+                    self.train()
+                    # self.take_screenshot()
+                    self.reset()
 
                 # flag growth and eat
                 self.isFruit_eaten = False
                 self.env.snake.grow = False
 
-                if self.episode_done:
-                    self.take_screenshot()
-                    self.reset()
-
+            #* --------------------------------------Update UI -------------------------------------------
+            # Reset screen
+            self.screen.fill("black")
+            # Draw game 
             self.draw_panel()
+            self.draw_grid()
+            self.danger_rects = self.env.danger_rects
+            self.draw_danger_box(self.danger_rects)
+            self.snake.draw_snake(self.screen)
+            self.fruit.draw_fruit(self.screen)
 
             self.move_delay += 1
             self.clock.tick(60)
             # Update screen
             pygame.display.flip()
-
-    def handle_mouse(self, pos):
-        if self.train_button.collidepoint(pos):
-            self.train()
-        elif self.reset_button.collidepoint(pos):
-            self.reset()
 
     def train(self):
         if self.training_enabled:
@@ -138,31 +146,22 @@ class Game:
                 print(f"Model saved at episode {self.episodes}") 
 
     def get_reward(self, old, new):
-        import math 
-        _, _, _, ofx, ofy = old 
-        _, _, _, nfx, nfy = new 
+        # import math 
+        # _, _, _, ofx, ofy = old 
+        # _, _, _, nfx, nfy = new 
 
 
-        mag_old = math.hypot(ofx, ofy)
-        mag_new = math.hypot(nfx, nfy)
-        if mag_new < mag_old: 
-            return self.agent.reward["move_close"]
+        # mag_old = math.hypot(ofx, ofy)
+        # mag_new = math.hypot(nfx, nfy)
+        # if mag_new < mag_old: 
+        #     return self.agent.reward["move_close"]
+
         if self.episode_done:
             return self.agent.reward["death"] 
         if self.isFruit_eaten:
             return self.agent.reward["eat"]
-        return self.agent.reward["time_score_decay"] 
-
-    def draw_button(self):
-        pygame.draw.rect(self.screen, "blue", self.train_button)
-        pygame.draw.rect(self.screen, "red", self.reset_button)
-
-        font = pygame.font.SysFont("consolas", 20)
-        train_text = font.render("Train", True, "white")
-        reset_text = font.render("Reset", True, "white")
-
-        self.screen.blit(train_text, (self.train_button.x + 20, self.train_button.y + 10))
-        self.screen.blit(reset_text, (self.reset_button.x + 20, self.reset_button.y + 10))
+        # return self.agent.reward["time_score_decay"] 
+        return self.agent.reward["none"]
 
     def draw_panel(self):
         Rect = (config.GAME_WIDTH, 0,
@@ -326,7 +325,7 @@ class Game:
         mean_coor = [((i * 20 )/ self.x_multiplier + config.GAME_WIDTH + 50, (acc_offsety - mean_score * 20 ))
                     for i, mean_score in enumerate(self.scores_array)]
         
-        for i in range(len(coords)):
+        for i in range(1, len(coords)):
             x1, y1 = coords[i - 1]
             x2, y2 = coords[i]
             pygame.draw.line(self.screen, "green", (x1, y1), (x2, y2), 1)
@@ -335,7 +334,6 @@ class Game:
         #     x1, y1 = mean_coor[i - 1]
         #     x2, y2 = mean_coor[i]
         #     pygame.draw.line(self.screen, "blue", (x1, y1), (x2, y2), 1)
-
 
     def take_screenshot(self):
         os.makedirs("documentation/episodes", exist_ok=True)
