@@ -8,16 +8,7 @@ class Fruit:
         self.game_w = config.GAME_WIDTH
         self.game_h = config.GAME_HEIGHT
         self.position = self.spawn_Fruit(snake_segment)
-
-    def isEaten(self, head_pos):
-        if head_pos == self.position:
-            return True
-        return False
-    
-    def draw_fruit(self, screen):
-        Rect = (self.position.x * self.cell_size, self.position.y * self.cell_size,
-                self.cell_size, self.cell_size)
-        pygame.draw.rect(screen, config.FRUIT_COLOR, Rect)
+        self.isEaten = False
 
     def spawn_Fruit(self, segments):
         while True:

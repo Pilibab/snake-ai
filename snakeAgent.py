@@ -8,7 +8,7 @@ from model import DQN
 
 
 class Agent:
-    def __init__(self, state_size = 9, output_size = 3):
+    def __init__(self, state_size = 11, output_size = 3):
         self.state_size = state_size
         self.action_size = output_size
         # Constants / hyper parameters
@@ -22,11 +22,11 @@ class Agent:
         self.batch_size = config.BATCH_SIZE
 
         self.reward = {
-            "eat": 10,
-            "death": -100,
-            "move_close": .01,
-            "time_score_decay": -0.05,
-            "none": 0
+            "eat": 20,
+            "death": -24,
+            "move_close": .3,
+            "time_score_decay": -0.5,
+            "none": 0 
         }
         # Neural network 
         self.model = DQN(state_size, 256, output_size)

@@ -13,13 +13,13 @@ class DQN(nn.Module):
         x = F.relu(self.linear1(x))
         return self.linear2(x)
     
-    def save_model(self, file_name):
+    def save_model(self, file_name, episode):
         print("\n\nMODEL SAVED!!!\n\n")
         model_folder_path = './model'
         if not os.path.exists(model_folder_path):
             os.makedirs(model_folder_path)
-
-        torch.save(self.state_dict(), file_name)
+        file = f"{file_name}_ep_{episode}.pth"
+        torch.save(self.state_dict(), file)
 
     def load_model(self, FILE_PATH):
         self.model.load_state_dict(torch.load(FILE_PATH))

@@ -31,9 +31,9 @@ CLOCKWISE = [[0,1],
 
 # Machine learning constant / training const 
 AlPHA = 0.001
-GAMMA = .9
+GAMMA = .95
 EPSILON = 1.0
-EPS_DECAY = .995
+EPS_DECAY = .98
 EPS_MIN = 0.1
-BATCH_SIZE = 64         #exp
+BATCH_SIZE = 1000         #exp
 MEMORY = 100_000

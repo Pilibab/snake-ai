@@ -1,1 +1,0 @@
-upon further invistagation the snake functionally blind even if i added 3 danger flags its useless if the snake doesnt know what direction its facing

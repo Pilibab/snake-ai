@@ -1,3 +1,6 @@
 snake_ai_venv/
 __pycache__/
 documentation
+logs
+model
+

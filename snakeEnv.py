@@ -1,6 +1,5 @@
 import config 
 import pygame 
-
 from snake import Snake
 from helper import rotate_left, rotate_right
 from fruit import Fruit
@@ -52,7 +51,6 @@ class Snake_env:
         return False
 
     def get_state(self):
-        # TODO: try adding manhattan distance to state
         head = self.snake.segments[0]               # gets the first segment -> return vect2(), tuples 
         dir_v = self.snake.direction                # direction -> returns vect2() i.e (-1,0), (1,0) etc..
 
@@ -72,8 +70,8 @@ class Snake_env:
         danger_right = self.danger(pos_right)
 
         # Relative fruit position
-        fruit_dx = self.fruit.position.x - head.x
-        fruit_dy = self.fruit.position.y - head.y
+        # fruit_dx = self.fruit.position.x - head.x
+        # fruit_dy = self.fruit.position.y - head.y
 
         Rects = [
             ((head.x + left_dir[0]) * self.cell_size, (head.y + left_dir[1]) * self.cell_size, self.cell_size, self.cell_size),
@@ -82,19 +80,11 @@ class Snake_env:
         ]
         self.danger_rects = Rects
 
-        fruit_dir_x = 0
-        fruit_dir_y = 0
-
-        # fruit Direction 
-        if fruit_dx > 0:
-            fruit_dir_x = 1
-        elif  fruit_dx < 0:
-            fruit_dir_x = -1
-
-        if fruit_dy > 0:
-            fruit_dir_y = 1
-        elif fruit_dy < 0: 
-            fruit_dir_y = -1
+        
+        fruit_dir_l = self.fruit.position.x < head.x 
+        fruit_dir_r = self.fruit.position.x > head.x 
+        fruit_dir_u = self.fruit.position.y < head.y 
+        fruit_dir_d = self.fruit.position.y > head.y 
 
         dir_l = dir_v == (-1,0)
         dir_r = dir_v == (1,0)
@@ -105,8 +95,10 @@ class Snake_env:
                 danger_forward, 
                 danger_left, 
                 dir_l, dir_r, dir_u, dir_d,
-                fruit_dir_x, 
-                fruit_dir_y]
+                fruit_dir_l, 
+                fruit_dir_r, 
+                fruit_dir_u,
+                fruit_dir_d]
         
     def danger(self, pos):
         #TODO : if nearest forward_right and forward_left is danger then we set forward to be dangerous
